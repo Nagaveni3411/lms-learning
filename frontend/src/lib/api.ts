@@ -9,14 +9,25 @@ type RequestOptions = {
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const fetchOptions: RequestInit = {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
       ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  };
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, fetchOptions);
+  } catch (error) {
+    if (import.meta.env.PROD && API_BASE !== "/api") {
+      response = await fetch(`/api${path}`, fetchOptions);
+    } else {
+      throw error;
+    }
+  }
 
   const contentType = response.headers.get("content-type") ?? "";
   const data = contentType.includes("application/json")
