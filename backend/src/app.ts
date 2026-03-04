@@ -12,7 +12,30 @@ import { errorHandler, notFound } from "./middleware/error.js";
 export const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: config.frontendOrigin }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server and local tools with no Origin header.
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      // If FRONTEND_ORIGIN is not set, allow all origins by default.
+      if (config.frontendOrigins.length === 0) {
+        callback(null, true);
+        return;
+      }
+
+      if (config.frontendOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin not allowed by CORS"));
+    },
+  }),
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
