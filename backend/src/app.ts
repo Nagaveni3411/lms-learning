@@ -42,11 +42,18 @@ app.use(morgan("dev"));
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 app.use("/api/auth", authRouter);
+app.use("/auth", authRouter);
 app.use("/api/courses", coursesRouter);
+app.use("/courses", coursesRouter);
 app.use("/api", enrollmentsRouter);
+app.use("/", enrollmentsRouter);
 app.use("/api/progress", progressRouter);
+app.use("/progress", progressRouter);
 
 app.use(notFound);
 app.use(errorHandler);

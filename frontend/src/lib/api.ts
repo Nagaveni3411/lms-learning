@@ -1,6 +1,6 @@
 import type { CourseCard, CourseDetail, LearnResponse, Role, User } from "../types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? "" : "http://localhost:4000/api");
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? "/api" : "http://localhost:4000/api");
 
 type RequestOptions = {
   method?: "GET" | "POST";
@@ -9,10 +9,6 @@ type RequestOptions = {
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  if (!API_BASE) {
-    throw new Error("VITE_API_BASE_URL is not configured in production");
-  }
-
   const response = await fetch(`${API_BASE}${path}`, {
     method: options.method ?? "GET",
     headers: {
