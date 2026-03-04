@@ -1,6 +1,6 @@
 import type { CourseCard, CourseDetail, LearnResponse, Role, User } from "../types";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? "/api" : "http://localhost:4000/api");
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? "" : "http://localhost:4000/api");
 
 type RequestOptions = {
   method?: "GET" | "POST";
@@ -9,6 +9,10 @@ type RequestOptions = {
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (!API_BASE) {
+    throw new Error("VITE_API_BASE_URL is not configured in production");
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
     method: options.method ?? "GET",
     headers: {
@@ -18,9 +22,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  const data = await response.json().catch(() => ({}));
+  const contentType = response.headers.get("content-type") ?? "";
+  const data = contentType.includes("application/json")
+    ? await response.json().catch(() => ({}))
+    : await response.text().catch(() => "");
+
   if (!response.ok) {
-    throw new Error(data?.message ?? "API request failed");
+    if (typeof data === "string" && data.trim().length > 0) {
+      throw new Error(`API request failed (${response.status})`);
+    }
+    throw new Error((data as { message?: string })?.message ?? `API request failed (${response.status})`);
   }
   return data as T;
 }
